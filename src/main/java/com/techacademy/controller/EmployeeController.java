@@ -49,6 +49,33 @@ public class EmployeeController {
         return "employees/detail";
     }
 
+    // 従業員更新画面
+    @GetMapping(value = "/{code}/edit")
+    public String getEmployee(@PathVariable("code") String code, Model model) {
+        Employee employee = employeeService.findByCode(code);
+        model.addAttribute("employee", employee);
+
+        return "employees/edit";
+    }
+
+    // 従業員更新処理
+    @PostMapping("/{code}/edit")
+    public String update(@PathVariable("code") String code, @Validated @ModelAttribute Employee employee,
+            BindingResult res, Model model) {
+
+        // 入力チェック
+        if (res.hasErrors()) {
+            model.addAttribute("employee", employee);
+            return "employees/edit";
+        }
+
+        // 更新処理
+        employeeService.save(employee);
+
+        // 一覧画面にリダイレクト
+        return "redirect:/employees/list";
+    }
+
     // 従業員新規登録画面
     @GetMapping(value = "/add")
     public String create(@ModelAttribute Employee employee) {
@@ -100,7 +127,8 @@ public class EmployeeController {
 
     // 従業員削除処理
     @PostMapping(value = "/{code}/delete")
-    public String delete(@PathVariable("code") String code, @AuthenticationPrincipal UserDetail userDetail, Model model) {
+    public String delete(@PathVariable("code") String code, @AuthenticationPrincipal UserDetail userDetail,
+            Model model) {
 
         ErrorKinds result = employeeService.delete(code, userDetail);
 
