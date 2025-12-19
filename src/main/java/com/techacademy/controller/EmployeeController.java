@@ -50,30 +50,46 @@ public class EmployeeController {
     }
 
     // 従業員更新画面
-    @GetMapping(value = "/{code}/edit")
-    public String getEmployee(@PathVariable("code") String code, Model model) {
-        Employee employee = employeeService.findByCode(code);
-        model.addAttribute("employee", employee);
+    @GetMapping(value = "/{code}/update")
+    public String edit(@PathVariable("code") String code, Model model) {
+        model.addAttribute("employee", employeeService.findByCode(code));
 
-        return "employees/edit";
+        return "employees/update";
     }
 
     // 従業員更新処理
-    @PostMapping("/{code}/edit")
-    public String update(@PathVariable("code") String code, @Validated @ModelAttribute Employee employee,
-            BindingResult res, Model model) {
+    @PostMapping(value = "/{code}/update")
+    public String update(@PathVariable("code") String code, @Validated Employee employee, BindingResult res,
+            Model model) {
+
+
+     // パスワード空白チェック
+        if ("".equals(employee.getPassword())) {
+            employee.setPassword(code);
+        }
 
         // 入力チェック
         if (res.hasErrors()) {
-            model.addAttribute("employee", employee);
-            return "employees/edit";
+            return edit(code, model);
         }
 
-        // 更新処理
-        employeeService.save(employee);
+        // 論理削除を行った従業員番号を指定すると例外となるためtry~catchで対応
+        // (findByIdでは削除フラグがTRUEのデータが取得出来ないため)
+        try {
+            ErrorKinds result = employeeService.update(employee);
 
-        // 一覧画面にリダイレクト
-        return "redirect:/employees/list";
+            if (ErrorMessage.contains(result)) {
+                model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+                return edit(code, model);
+            }
+
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute(ErrorMessage.getErrorName(ErrorKinds.DUPLICATE_EXCEPTION_ERROR),
+                    ErrorMessage.getErrorValue(ErrorKinds.DUPLICATE_EXCEPTION_ERROR));
+            return edit(code, model);
+        }
+
+        return "redirect:/employees";
     }
 
     // 従業員新規登録画面
