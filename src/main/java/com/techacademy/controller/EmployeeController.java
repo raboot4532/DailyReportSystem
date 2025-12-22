@@ -51,10 +51,17 @@ public class EmployeeController {
 
     // 従業員更新画面
     @GetMapping(value = "/{code}/update")
-    public String edit(@PathVariable("code") String code, Model model) {
+    public String edit(@PathVariable("code") String code, Employee employee, Model model) {
+        if(code != null) {
         model.addAttribute("employee", employeeService.findByCode(code));
+        }else {
+            model.addAttribute("employee", employee);
+        }
 
         return "employees/update";
+
+
+
     }
 
     // 従業員更新処理
@@ -63,30 +70,24 @@ public class EmployeeController {
             Model model) {
 
 
-     // パスワード空白チェック
-        if ("".equals(employee.getPassword())) {
-            employee.setPassword(code);
-        }
 
         // 入力チェック
         if (res.hasErrors()) {
-            return edit(code, model);
+            return edit(null, employee, model);
         }
 
-        // 論理削除を行った従業員番号を指定すると例外となるためtry~catchで対応
-        // (findByIdでは削除フラグがTRUEのデータが取得出来ないため)
         try {
             ErrorKinds result = employeeService.update(employee);
 
             if (ErrorMessage.contains(result)) {
                 model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
-                return edit(code, model);
+                return edit(null, employee, model);
             }
 
         } catch (DataIntegrityViolationException e) {
             model.addAttribute(ErrorMessage.getErrorName(ErrorKinds.DUPLICATE_EXCEPTION_ERROR),
                     ErrorMessage.getErrorValue(ErrorKinds.DUPLICATE_EXCEPTION_ERROR));
-            return edit(code, model);
+            return edit(null, employee, model);
         }
 
         return "redirect:/employees";

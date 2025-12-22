@@ -53,18 +53,26 @@ public class EmployeeService {
     // 従業員更新
     @Transactional
     public ErrorKinds update(Employee employee) {
+        Employee emp = findByCode(employee.getCode());
 
-        // パスワードチェック
-        ErrorKinds result = employeePasswordCheck(employee);
-        if (ErrorKinds.CHECK_OK != result) {
-            return result;
+        // パスワード空白チェック
+        if ("".equals(employee.getPassword())) {
+
+            employee.setPassword(emp.getPassword());
+        } else {
+            ErrorKinds result = employeePasswordCheck(employee);
+            if (ErrorKinds.CHECK_OK != result) {
+                return result;
+            }
         }
-
 
         employee.setDeleteFlg(false);
 
         LocalDateTime now = LocalDateTime.now();
         employee.setUpdatedAt(now);
+
+     // ここでDBから取得した情報を設定
+        employee.setCreatedAt(emp.getCreatedAt());
 
         employeeRepository.save(employee);
         return ErrorKinds.SUCCESS;
