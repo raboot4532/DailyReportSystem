@@ -2,11 +2,9 @@ package com.techacademy.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.techacademy.constants.ErrorKinds;
@@ -21,18 +19,38 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportsService {
 
     private final ReportsRepository reportsRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public ReportsService(ReportsRepository reportsRepository) {
+
+    public ReportsService(ReportsRepository reportsRepository, EmployeeRepository employeeRepository) {
         this.reportsRepository = reportsRepository;
+        this.employeeRepository = employeeRepository;
+
     }
 
-
-    // 従業員一覧表示処理
+    // 日報一覧表示処理
     public List<Reports> findAll() {
         return reportsRepository.findAll();
     }
 
+    // 日報保存
+    @Transactional
+    public ErrorKinds save(Reports reports) {
 
+        reports.setDeleteFlg(false);
 
+        LocalDateTime now = LocalDateTime.now();
+        reports.setCreatedAt(now);
+        reports.setUpdatedAt(now);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetail userDetail = (UserDetail) auth.getPrincipal();
+
+        Employee employee = employeeRepository.findById(userDetail.getEmployee().getCode()).orElseThrow();
+        reports.setEmployee(employee);
+
+        reportsRepository.save(reports);
+        return ErrorKinds.SUCCESS;
+    }
 
 }
