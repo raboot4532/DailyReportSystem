@@ -49,6 +49,12 @@ public class ReportsService {
         Employee employee = employeeRepository.findById(userDetail.getEmployee().getCode()).orElseThrow();
         reports.setEmployee(employee);
 
+        boolean exists = reportsRepository.existsByEmployeeCodeAndReportDate(employee.getCode(), reports.getReportDate());
+        if (exists) {
+            return ErrorKinds.DUPLICATE_ERROR;
+        }
+
+
         reportsRepository.save(reports);
         return ErrorKinds.SUCCESS;
     }

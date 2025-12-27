@@ -27,6 +27,8 @@
                                         <div class="col-md-7">
                                             <input class="form-control" type="date" th:field="*{reportDate}" th:errorclass="err" id="reportDate">
                                             <span th:errors="*{reportDate}" class="text-danger"></span>
+                                            <p th:if="${errorMessage}" th:text="${errorMessage}" class="text-danger"></p>
+
                                         </div>
                                     </div>
                                     <div class="mb-3">

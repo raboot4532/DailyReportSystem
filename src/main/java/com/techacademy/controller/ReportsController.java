@@ -52,6 +52,13 @@ public class ReportsController {
  // 日報新規登録処理
     @PostMapping(value = "/add")
     public String add(@Validated Reports reports, BindingResult res, Model model) {
+        ErrorKinds result = reportsService.save(reports);
+
+
+        if (result == ErrorKinds.DUPLICATE_ERROR) {
+            model.addAttribute("errorMessage", "既に登録されている日付です");
+            return create(reports);
+        }
 
 
         // 入力チェック
