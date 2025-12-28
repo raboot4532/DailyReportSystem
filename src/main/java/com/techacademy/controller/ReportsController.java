@@ -1,8 +1,8 @@
 package com.techacademy.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
-import com.techacademy.entity.Employee;
 import com.techacademy.entity.Reports;
 import com.techacademy.service.ReportsService;
 import com.techacademy.service.UserDetail;
@@ -53,6 +52,44 @@ public class ReportsController {
         return "reports/detail";
     }
 
+ // 日報更新画面
+    @GetMapping(value = "/{id}/update")
+    public String edit(@PathVariable("id") Integer id, Reports reports, Model model) {
+        if(id != null) {
+            model.addAttribute("reports", reportsService.findById(id));
+            }else {
+                model.addAttribute("reports", reports);
+            }
+
+        return "reports/update";
+
+    }
+
+    // 日報更新処理
+    @PostMapping(value = "/{id}/update")
+    public String update(@PathVariable("id") Integer id, @Validated Reports reports, BindingResult res, Model model) {
+        // 入力チェック
+        if (res.hasErrors()) {
+            return edit(null, reports, model);
+        }
+
+        try {
+            ErrorKinds result = reportsService.update(reports);
+
+            if (ErrorMessage.contains(result)) {
+                model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+                return edit(null, reports, model);
+            }
+
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute(ErrorMessage.getErrorName(ErrorKinds.DUPLICATE_EXCEPTION_ERROR),
+                    ErrorMessage.getErrorValue(ErrorKinds.DUPLICATE_EXCEPTION_ERROR));
+            return edit(null, reports, model);
+        }
+
+        return "redirect:/reports";
+    }
+
  // 日報新規登録画面
     @GetMapping(value = "/add")
     public String create(@ModelAttribute Reports reports) {
@@ -67,12 +104,14 @@ public class ReportsController {
         if (res.hasErrors()) {
             return create(reports);
         }
+
         ErrorKinds result = reportsService.save(reports);
 
-        if (result == ErrorKinds.DUPLICATE_ERROR) {
-            model.addAttribute("errorMessage", "既に登録されている日付です");
+        if (ErrorMessage.contains(result)) {
+            model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
             return create(reports);
         }
+
 
         return "redirect:/reports";
     }

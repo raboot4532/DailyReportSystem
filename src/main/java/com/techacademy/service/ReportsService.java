@@ -47,10 +47,44 @@ public class ReportsService {
     @Transactional
     public ErrorKinds save(Reports reports) {
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetail userDetail = (UserDetail) auth.getPrincipal();
+
+        Employee employee = employeeRepository.findById(userDetail.getEmployee().getCode()).orElseThrow();
+        reports.setEmployee(employee);
+        boolean exists = reportsRepository.existsByEmployeeCodeAndReportDate(employee.getCode(), reports.getReportDate());
+        if (exists) {
+            return ErrorKinds.DATECHECK_ERROR;
+        }
+
+
         reports.setDeleteFlg(false);
 
         LocalDateTime now = LocalDateTime.now();
         reports.setCreatedAt(now);
+        reports.setUpdatedAt(now);
+
+
+
+        reportsRepository.save(reports);
+        return ErrorKinds.SUCCESS;
+    }
+
+    // 日報更新
+    @Transactional
+    public ErrorKinds update(Reports reports) {
+        Reports rep = findById(reports.getId());
+        //重複チェック
+        boolean exists = reportsRepository.existsByEmployeeCodeAndReportDateAndIdNot(rep.getEmployee().getCode(), reports.getReportDate(), reports.getId());
+
+            if (exists) {
+                return ErrorKinds.DATECHECK_ERROR;
+            }
+
+
+        reports.setDeleteFlg(false);
+        reports.setCreatedAt(rep.getCreatedAt());
+        LocalDateTime now = LocalDateTime.now();
         reports.setUpdatedAt(now);
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -59,15 +93,10 @@ public class ReportsService {
         Employee employee = employeeRepository.findById(userDetail.getEmployee().getCode()).orElseThrow();
         reports.setEmployee(employee);
 
-        boolean exists = reportsRepository.existsByEmployeeCodeAndReportDate(employee.getCode(), reports.getReportDate());
-        if (exists) {
-            return ErrorKinds.DUPLICATE_ERROR;
-        }
-
-
         reportsRepository.save(reports);
         return ErrorKinds.SUCCESS;
     }
+
  // 日報削除
     @Transactional
     public ErrorKinds delete(int id, UserDetail userDetail) {

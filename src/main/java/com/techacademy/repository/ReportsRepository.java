@@ -9,4 +9,8 @@ import com.techacademy.entity.Reports;
 public interface ReportsRepository extends JpaRepository<Reports, Integer> {
 
     boolean existsByEmployeeCodeAndReportDate(String code, LocalDate reportDate);
+
+    boolean existsByEmployeeCodeAndReportDateAndIdNot(String code, LocalDate reportDate, Integer id);
+
 }
+
