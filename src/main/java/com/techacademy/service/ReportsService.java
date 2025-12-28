@@ -2,6 +2,7 @@ package com.techacademy.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +34,15 @@ public class ReportsService {
         return reportsRepository.findAll();
     }
 
+ // 1件を検索
+    public Reports findById(Integer id) {
+        // findByIdで検索
+        Optional<Reports> option = reportsRepository.findById(id);
+        // 取得できなかった場合はnullを返す
+        Reports reports = option.orElse(null);
+        return reports;
+    }
+
     // 日報保存
     @Transactional
     public ErrorKinds save(Reports reports) {
@@ -56,6 +66,17 @@ public class ReportsService {
 
 
         reportsRepository.save(reports);
+        return ErrorKinds.SUCCESS;
+    }
+ // 日報削除
+    @Transactional
+    public ErrorKinds delete(int id, UserDetail userDetail) {
+
+        Reports reports = findById(id);
+        LocalDateTime now = LocalDateTime.now();
+        reports.setUpdatedAt(now);
+        reports.setDeleteFlg(true);
+
         return ErrorKinds.SUCCESS;
     }
 
